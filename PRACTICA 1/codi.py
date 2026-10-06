@@ -100,3 +100,5 @@ for l, linia in enumerate(cross):
         resultats.append([s, index-s])
 
     dicC['Horitzontal'][l] = resultats
+
+dicC['Vertical'][0]: resultats
