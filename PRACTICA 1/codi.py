@@ -1,3 +1,37 @@
+def actualitzarDominis(espais, cross, dicP, visitats, paraula):
+    #Volem saber si, després de l'assignació, es pot continuar per aquesta solució o, en el cas contrari,
+    # hi han forats que no es poden emplenar
+    for forat in espais:
+        domini = False
+
+        if '0' in cross[forat[1]][forat[3]]:
+            # Comprovem cada paraula de l'allargada del forat que no estigui ja a la solució
+            for p in dicP[forat[2]]:
+                if p not in visitats and p != paraula:
+                    i = 0
+
+                    for char in p:
+                        if forat[0] == 'V':
+                            # Si no hi ha opció de posar la paraula p al forat passem a la següent paraula
+                            if cross[forat[1] + i][forat[3]] != char and cross[forat[1] + i][forat[3]] != '0':
+                                break
+
+                        else:
+                            if cross[forat[1]][forat[3] + i] != char and cross[forat[1]][forat[3] + i] != '0':
+                                break
+
+                        i += 1
+
+                    #Comprovem que almenys existeixi una paraula que pugui cabre en el forat
+                    if i == forat[2]:
+                        domini = True
+                        break
+
+            if not domini:
+                return False
+
+    return True
+
 def backtracking(espais, index, matriu, visitats):
     #Comprovem si hem omplert tot l'encreuat
     if index == len(espais):
@@ -7,7 +41,7 @@ def backtracking(espais, index, matriu, visitats):
     direccio = espais[index][0] #Tindrem 'H' = horitzontal i 'V' = vertical
     x = espais[index][1] #Fila on comença l'espai
     allargada = espais[index][2] #longitud de l'espai = nombre de lletres
-    y = espais[index][3] #columna on comença l'espai
+    y = espais[index][3] #Columna on comença l'espai
 
     #Comprovem si el diccionari té paraules amb aquesta longitud
     if allargada in dicP:
@@ -15,20 +49,23 @@ def backtracking(espais, index, matriu, visitats):
             #Si n'hi ha ens assegurem de no fer servir una paraula que ja està posada al tauler
             if p not in visitats:
                 if direccio == 'H':
-                    #Fem una copia de la fila per poder desfer els canvis en cas de que aquesta paraula no porta a una solució
+                    #Fem una copia de la fila per poder desfer els canvis en cas de que aquesta paraula no porta a
+                    # una solució
                     copia = list(matriu[x])
                     valida = posarParaulaH(p,x,y, matriu)
 
                 else:
-                    #Fem una copia de la columna per poder desfer els canvis en cas de que aquesta paraula no porta a una solució
+                    #Fem una copia de la columna per poder desfer els canvis en cas de que aquesta paraula no porta
+                    # a una solució
                     copia = [matriu[i][y] for i in range(len(matriu))]
                     valida = posarParaulaV(p,x,y,matriu)
 
-                if valida:
-                    #Si la paraula es valida la marquem com a utilitzada
+                #Si la paraula es valida fem forwardchecking
+                if valida and actualitzarDominis(espais, cross, dicP, visitats, p):
+                    #Es pot continuar la solució
                     visitats.append(p)
 
-                    #avancem al següent espai
+                    #Avancem al següent espai
                     if backtracking(espais, index+1, matriu, visitats):
                         return True
 
@@ -48,7 +85,8 @@ def backtracking(espais, index, matriu, visitats):
 
 
 def posarParaulaH(p, x, y, matriu):
-    #Funció per col·locar una paraula en horitzontal. Comprova que cada lletra encaixi amb l'espai buit o amb la lletra que hi ha.
+    #Funció per col·locar una paraula en horitzontal. Comprova que cada lletra encaixi amb l'espai buit o amb la
+    # lletra que hi ha.
     it = y
     for char in p:
         if matriu[x][it] == char or matriu[x][it] == '0':
@@ -97,14 +135,14 @@ for l, linia in enumerate(archivo2):
             cross[l].append(char)
 archivo2.close()
 
-#obtenim la mida de la paraula més petita per descartar espais massa petits
+#Obtenim la mida de la paraula més petita per descartar espais massa petits
 minim = min(dicP.keys())
 
 #Anàlisis del tauler per trobar els espais horitzontals
 for l, linia in enumerate(cross):
     index = 0
     resultats = []
-    s = 0 #comptem les caselles buides consecutives
+    s = 0 #Comptem les caselles buides consecutives
 
     for char in linia:
         if char == '0':
@@ -115,6 +153,7 @@ for l, linia in enumerate(cross):
                 resultats.append([s, index-s])
             s = 0
         index += 1
+
     #Comprovem si l'espai arriba al final de la linia
     if s >= minim:
         resultats.append([s, index-s])
@@ -139,7 +178,7 @@ for c in range(len(cross[0])):
     if resultats:
         dicC['Vertical'][c] = resultats
 
-#llista que emmagatzema els espais
+#Llista que emmagatzema els espais
 espais = []
 for l, forats in dicC['Horitzontal'].items():
     for f in forats:
