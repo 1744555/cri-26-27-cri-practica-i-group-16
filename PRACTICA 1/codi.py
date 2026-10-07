@@ -1,67 +1,60 @@
-def backtracking(cross, visitats):
-    if not visitats.empty():
-        esborra = visitats[len(visitats) - 1]
-        p = []
-        for char in esborra:
-            p.append(char)
-
-
-def posarParaulaH(allargada, visitats, x, y, matriu):
-    paraulaCorrecte = False
-    copia = matriu[x]
-
-    for p in dicP[allargada]:
-        if p not in visitats:
-            iterador = y
-            for char in p:
-                if matriu[x][iterador] == char or matriu[x][iterador] == '0':
-                    matriu[x][iterador] = char
-                    paraulaCorrecte = True
-                    iterador += 1
-
+def backtracking(tasques, index, matriu, visitats):
+    if index == len(tasques):
+        return True
+    direccio = tasques[index][0]
+    x = tasques[index][1]
+    allargada = tasques[index][2]
+    y = tasques[index][3]
+    if allargada in dicP:
+        for p in dicP[allargada]:
+            if p not in visitats:
+                if direccio == 'H':
+                    copia = list(matriu[x])
+                    valida = posarParaulaH(p,x,y, matriu)
                 else:
-                    paraulaCorrecte = False
-                    matriu[x] = copia
-                    break
-
-            if paraulaCorrecte:
-                visitats.append(p)
-                break
-
-    return paraulaCorrecte
-
-
-def posarParaulaV(allargada, visitats, x, y, matriu):
-    paraulaCorrecte = False
-    copia = matriu
-
-    for p in dicP[allargada]:
-        if p not in visitats:
-            iterador = x
-            for char in p:
-                if matriu[iterador][y] == char or matriu[iterador][y] == '0':
-                    matriu[iterador][y] = char
-                    paraulaCorrecte = True
-                    iterador += 1
-
+                    copia = [matriu[i][y] for i in range(len(matriu))]
+                    valida = posarParaulaV(p,x,y,matriu)
+                if valida:
+                    visitats.append(p)
+                    if backtracking(tasques, index+1, matriu, visitats):
+                        return True
+                    visitats.pop()
+                if direccio =='H':
+                    matriu[x] = list(copia)
                 else:
-                    paraulaCorrecte = False
                     for i in range(len(matriu)):
-                        matriu[i][y] = copia[i][y]
+                        matriu[i][y] = copia[i]
 
-                    break
+    return False
 
-            if paraulaCorrecte:
-                visitats.append(p)
-                break
 
-    return paraulaCorrecte
+def posarParaulaH(p, x, y, matriu):
+    it = y
+    for char in p:
+        if matriu[x][it] == char or matriu[x][it] == '0':
+            matriu[x][it] = char
+            it += 1
+        else:
+            return False
+    return True
+
+
+
+def posarParaulaV(p, x, y, matriu):
+    it = x
+    for char in p:
+        if matriu[it][y] == char or matriu[it][y] == '0':
+            matriu[it][y] = char
+            it += 1
+        else:
+            return False
+    return True
 
 dicC = {'Horitzontal': {}, 'Vertical': {}}
 dicP = dict()
 cross = list()
 
-archivo1 = open("MaterialsPractica/diccionari_CB_v3.txt", "rt")
+archivo1 = open("MaterialsPractica/dicP_CB_v3.txt", "rt")
 for linia in archivo1:
     linia = linia.strip('\n')
     if len(linia) in dicP:
@@ -100,3 +93,37 @@ for l, linia in enumerate(cross):
         resultats.append([s, index-s])
 
     dicC['Horitzontal'][l] = resultats
+
+for c in range(len(cross[0])):
+    index = 0
+    resultats = []
+    s = 0
+    for l in range(len(cross)):
+        if cross[l][c] == '0':
+            s += 1
+        else:
+            if s >= minim:
+                resultats.append([s, index-s])
+            s = 0
+        index += 1
+    if s >= minim:
+        resultats.append([s, index-s])
+    if resultats:
+        dicC['Vertical'][c] = resultats
+
+tasques = []
+for l, forats in dicC['Horitzontal'].items():
+    for f in forats:
+        tasques.append(('H', l, f[0], f[1])) 
+        
+for c, forats in dicC['Vertical'].items():
+    for f in forats:
+        tasques.append(('V', f[1], f[0], c)) 
+
+visitats = []
+if backtracking(tasques, 0, cross, visitats):
+    print("Solució trobada")
+    for fila in cross:
+        print(" ".join(fila))
+else:
+    print("No s'ha trobat solució.")
